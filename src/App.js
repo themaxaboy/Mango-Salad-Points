@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import database from "./database";
 import QrReader from "react-qr-reader";
+import md5 from "blueimp-md5";
 import {
   Button,
   Segment,
@@ -10,18 +11,22 @@ import {
   Message,
   Step,
   Input,
-  Header
+  Header,
+  Icon,
+  Modal
 } from "semantic-ui-react";
 
 class App extends Component {
   state = {
     delay: 100,
     result: "-",
-    point: "-",
+    point: 0,
     input: "",
     scan: false,
     step: 0,
-    mode: "+"
+    mode: "+",
+    modalMessage: "",
+    modalOpen: false
   };
 
   readDatabase = () => {
@@ -30,7 +35,11 @@ class App extends Component {
       .ref(this.state.result)
       .once("value")
       .then(snapshot => {
-        this.setState({ point: snapshot.val() });
+        if (snapshot.val()) {
+          this.setState({ point: snapshot.val() });
+        } else {
+          this.setState({ point: 0 });
+        }
       });
   };
 
@@ -51,8 +60,26 @@ class App extends Component {
     this.setState({ point: value });
   };
 
+  handleOpen = () => this.setState({ modalOpen: true });
+
+  handleClose = () => this.setState({ modalOpen: false });
+
+  validateValue = () => {
+    if (parseInt(this.state.input, 10) > parseInt(this.state.point, 10)) {
+      this.setState({
+        modalMessage:
+          "Something went wrong. The input value is greater than points remaining."
+      });
+      this.handleOpen();
+      return false;
+    } else {
+      return true;
+    }
+  };
+
   handleScan = result => {
     if (result) {
+      result = md5(result);
       this.setState({ result, scan: false, step: 1 }, () =>
         this.readDatabase()
       );
@@ -266,7 +293,17 @@ class App extends Component {
                 1: (
                   <Button.Group>
                     <Button
-                      onClick={() => this.setState({ step: 2, mode: "+" })}
+                      onClick={() => {
+                        if (this.state.input) {
+                          this.setState({ step: 2, mode: "+" });
+                        } else {
+                          this.setState({
+                            modalMessage:
+                              "Something went wrong. The input value is undefined."
+                          });
+                          this.handleOpen();
+                        }
+                      }}
                       size="big"
                       positive
                     >
@@ -276,7 +313,17 @@ class App extends Component {
                     <Button.Or />
 
                     <Button
-                      onClick={() => this.setState({ step: 2, mode: "-" })}
+                      onClick={() => {
+                        if (this.state.input && this.validateValue()) {
+                          this.setState({ step: 2, mode: "-" });
+                        } else {
+                          this.setState({
+                            modalMessage:
+                              "Something went wrong. The input value is undefined."
+                          });
+                          this.handleOpen();
+                        }
+                      }}
                       size="big"
                       negative
                     >
@@ -294,7 +341,7 @@ class App extends Component {
                             this.setState({
                               step: 0,
                               result: "-",
-                              point: "-",
+                              point: 0,
                               input: ""
                             });
                           }, 3000)
@@ -334,6 +381,22 @@ class App extends Component {
             }
           </Container>
         </Segment>
+        <Modal
+          open={this.state.modalOpen}
+          onClose={this.handleClose}
+          basic
+          size="small"
+        >
+          <Header icon="exclamation" content="Error!" />
+          <Modal.Content>
+            <h3>{this.state.modalMessage}</h3>
+          </Modal.Content>
+          <Modal.Actions>
+            <Button color="green" onClick={this.handleClose} inverted>
+              <Icon name="close" /> Close
+            </Button>
+          </Modal.Actions>
+        </Modal>
       </div>
     );
   }
