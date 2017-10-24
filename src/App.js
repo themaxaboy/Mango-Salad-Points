@@ -314,8 +314,12 @@ class App extends Component {
 
                     <Button
                       onClick={() => {
-                        if (this.state.input && this.validateValue()) {
-                          this.setState({ step: 2, mode: "-" });
+                        if (this.state.input) {
+                          if (this.validateValue()) {
+                            this.setState({ step: 2, mode: "-" });
+                          } else {
+                            return;
+                          }
                         } else {
                           this.setState({
                             modalMessage:
