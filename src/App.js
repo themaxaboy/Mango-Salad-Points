@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import database from "./database";
 import QrReader from "react-qr-reader";
-import md5 from "blueimp-md5";
 import {
   Button,
   Segment,
@@ -78,8 +77,8 @@ class App extends Component {
   };
 
   handleScan = result => {
-    if (result) {
-      result = md5(result);
+    if (result && result.indexOf("facebook") > 0) {
+      result = result.substring(result.indexOf("=") + 1, result.length);
       this.setState({ result, scan: false, step: 1 }, () =>
         this.readDatabase()
       );
@@ -348,7 +347,7 @@ class App extends Component {
                               point: 0,
                               input: ""
                             });
-                          }, 3000)
+                          }, 2000)
                         );
                       }}
                       size="big"
