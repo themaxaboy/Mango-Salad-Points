@@ -22,3 +22,4 @@ yarn-error.log*
 src/database.js
 *.lock
 *.lock
+*.lock
